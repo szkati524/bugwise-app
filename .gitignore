@@ -1,0 +1,19 @@
+# --- JAVA / SPRING ---
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+backend/.idea/
+backend/*.iml
+
+# --- NODE / REACT ---
+frontend/node_modules/
+frontend/dist/
+frontend/.eslintcache
+frontend/npm-debug.log*
+
+# --- SYSTEM & IDE ---
+.vscode/
+.idea/
+.DS_Store
+*.swp
