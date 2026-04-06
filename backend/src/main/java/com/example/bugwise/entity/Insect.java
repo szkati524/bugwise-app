@@ -3,6 +3,7 @@ package com.example.bugwise.entity;
 import com.example.bugwise.enums.DangerLevel;
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -42,7 +43,10 @@ public class Insect {
     @Enumerated(EnumType.STRING)
     private DangerLevel dangerLevel;
 
-    public Insect(Long id, String commonName, String latinName, String englishName, InsectOrder insectOrder, InsectFamily insectFamily, String description, Habitat habitat, List<InsectImage> insectImage, Set<Tag> tag, boolean isProtected, DangerLevel dangerLevel) {
+    @OneToMany(mappedBy = "insect",cascade = CascadeType.ALL)
+    private List<Question> templateQuestions = new ArrayList<>();
+
+    public Insect(Long id, String commonName, String latinName, String englishName, InsectOrder insectOrder, InsectFamily insectFamily, String description, Habitat habitat, List<InsectImage> insectImage, Set<Tag> tag, boolean isProtected, DangerLevel dangerLevel,List<Question> templateQuestions) {
         this.id = id;
         this.commonName = commonName;
         this.latinName = latinName;
@@ -55,6 +59,7 @@ public class Insect {
         this.tag = tag;
         this.isProtected = isProtected;
         this.dangerLevel = dangerLevel;
+        this.templateQuestions = templateQuestions;
     }
     public Insect(){
 
@@ -154,5 +159,13 @@ public class Insect {
 
     public void setDangerLevel(DangerLevel dangerLevel) {
         this.dangerLevel = dangerLevel;
+    }
+
+    public List<Question> getTemplateQuestions() {
+        return templateQuestions;
+    }
+
+    public void setTemplateQuestions(List<Question> templateQuestions) {
+        this.templateQuestions = templateQuestions;
     }
 }

@@ -1,6 +1,8 @@
 package com.example.bugwise.service;
 
 import com.example.bugwise.dto.InsectDTO;
+import com.example.bugwise.dto.InsectQuizDTO;
+import com.example.bugwise.dto.QuestionDTO;
 import com.example.bugwise.dto.TagDTO;
 import com.example.bugwise.entity.Insect;
 import com.example.bugwise.entity.Tag;
@@ -11,6 +13,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -85,6 +88,19 @@ return insectRepository.findById(id)
             throw new EntityNotFoundException("Insect with id " + id + " not found");
         }
         insectRepository.deleteById(id);
+    }
+    public InsectQuizDTO getInsectForQuiz(Long id){
+        Insect insect = insectRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Insect with id " + id + "not found"));
+        List<QuestionDTO> questionDTOS = insect.getTemplateQuestions().stream()
+                .map(q -> new QuestionDTO(
+                        q.getId(),
+                        q.getContent(),
+                        new ArrayList<>(q.getOptions()),
+                        q.getCorrectAnswer()
+                ))
+                .toList();
+        return new InsectQuizDTO(insect.getId(),insect.getCommonName(),questionDTOS);
     }
 
     }
