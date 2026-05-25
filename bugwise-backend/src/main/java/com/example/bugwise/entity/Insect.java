@@ -1,6 +1,7 @@
 package com.example.bugwise.entity;
 
 import com.example.bugwise.enums.DangerLevel;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -43,10 +44,15 @@ public class Insect {
     @Enumerated(EnumType.STRING)
     private DangerLevel dangerLevel;
 
-    @OneToMany(mappedBy = "insect",cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "insect",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     private List<Question> templateQuestions = new ArrayList<>();
 
-    public Insect(Long id, String commonName, String latinName, String englishName, InsectOrder insectOrder, InsectFamily insectFamily, String description, Habitat habitat, List<InsectImage> insectImage, Set<Tag> tag, boolean isProtected, DangerLevel dangerLevel,List<Question> templateQuestions) {
+    @ManyToMany(mappedBy = "savedInsects")
+    private List<User> usersWhoSaved = new ArrayList<>();
+
+
+
+    public Insect(Long id, String commonName, String latinName, String englishName, InsectOrder insectOrder, InsectFamily insectFamily, String description, Habitat habitat, List<InsectImage> insectImage, Set<Tag> tag, boolean isProtected, DangerLevel dangerLevel,List<Question> templateQuestions,List<User> usersWhoSaved) {
         this.id = id;
         this.commonName = commonName;
         this.latinName = latinName;
@@ -60,6 +66,7 @@ public class Insect {
         this.isProtected = isProtected;
         this.dangerLevel = dangerLevel;
         this.templateQuestions = templateQuestions;
+        this.usersWhoSaved = usersWhoSaved;
     }
     public Insect(){
 
@@ -165,5 +172,14 @@ public class Insect {
 
     public void setTemplateQuestions(List<Question> templateQuestions) {
         this.templateQuestions = templateQuestions;
+    }
+
+
+    public List<User> getUsersWhoSaved() {
+        return usersWhoSaved;
+    }
+
+    public void setUsersWhoSaved(List<User> usersWhoSaved) {
+        this.usersWhoSaved = usersWhoSaved;
     }
 }

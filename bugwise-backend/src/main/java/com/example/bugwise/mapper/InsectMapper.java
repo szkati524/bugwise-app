@@ -1,11 +1,13 @@
 package com.example.bugwise.mapper;
 
 import com.example.bugwise.dto.InsectDTO;
+import com.example.bugwise.dto.QuestionDTO;
 import com.example.bugwise.entity.Insect;
 import com.example.bugwise.entity.InsectImage;
 import com.example.bugwise.entity.Tag;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -13,6 +15,16 @@ public class InsectMapper {
 
     public InsectDTO toDTO(Insect insect){
         if (insect == null) return null;
+        List<QuestionDTO> questionDTOS = insect.getTemplateQuestions() != null
+                ? insect.getTemplateQuestions().stream()
+                .map(q -> new QuestionDTO(
+                        q.getId(),
+                        q.getContent(),
+                        new ArrayList<>(q.getOptions()),
+                        q.getCorrectAnswer()
+                ))
+                .toList()
+                : List.of();
         return new InsectDTO(
                 insect.getId(),
                 insect.getCommonName(),
@@ -26,7 +38,8 @@ public class InsectMapper {
                 insect.getTag() != null ? insect.getTag().stream().map(Tag::getName).toList() : List.of(),
                 insect.isProtected(),
                 insect.getDangerLevel() != null ? insect.getDangerLevel().name() : "unknown",
-                insect.getDangerLevel() != null ? insect.getDangerLevel().name() : null
+                insect.getDangerLevel() != null ? insect.getDangerLevel().name() : null,
+                questionDTOS
         );
     }
     public void updateEntityFromDTO(InsectDTO dto,Insect insect){

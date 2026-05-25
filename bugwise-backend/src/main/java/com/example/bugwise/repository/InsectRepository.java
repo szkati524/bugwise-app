@@ -1,6 +1,7 @@
 package com.example.bugwise.repository;
 
 import com.example.bugwise.entity.Insect;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,12 +19,14 @@ public interface InsectRepository extends JpaRepository<Insect,Long> {
             "LEFT JOIN FETCH i.insectImage ")
     List<Insect> findAllWithBasicInfo();
 
-
+@Query("SELECT DISTINCT i FROM Insect i LEFT JOIN FETCH i.templateQuestions WHERE i IN :insects")
+List<Insect> fetchQuestions(@Param("insects") List<Insect> insects);
 @Query("SELECT i FROM Insect i LEFT JOIN FETCH i.tag WHERE i IN :insects")
 List<Insect> fetchTags(@Param("insects")List<Insect> insects);
 
-@Query("SELECT DISTINCT i FROM Insect i LEFT JOIN FETCH i.templateQuestions WHERE i.id IN :ids")
+@Query("SELECT DISTINCT i FROM Insect i " + "LEFT JOIN FETCH i.templateQuestions " +  "WHERE i.id IN :ids")
     List<Insect> findAllByIdsWithQuestions(@Param("ids") List<Long> ids);
 
-
+@Query("SELECT DISTINCT i FROM Insect i " + "INNER JOIN FETCH i.templateQuestions")
+    List<Insect> findAllInsectsWithQuestions();
 }

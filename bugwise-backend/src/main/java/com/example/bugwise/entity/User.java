@@ -3,6 +3,8 @@ package com.example.bugwise.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -29,6 +31,14 @@ public class User {
     private int goodAnswers = 0;
     private int badAnswers = 0;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name="user_custom_quizzes",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "insect_id")
+    )
+    private List<Insect> savedInsects = new ArrayList<>();
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -42,9 +52,10 @@ public class User {
         this.password = builder.password;
         this.email = builder.email;
         this.bio = builder.bio;
-        this.avatarUrl = builder.avatarUrl; //
+        this.avatarUrl = builder.avatarUrl;
         this.goodAnswers = builder.goodAnswers;
         this.badAnswers = builder.badAnswers;
+        this.savedInsects = builder.savedInsects != null ? builder.savedInsects : new ArrayList<>();
     }
 
 
@@ -118,6 +129,14 @@ public class User {
         this.createdAt = createdAt;
     }
 
+    public List<Insect> getSavedInsects() {
+        return savedInsects;
+    }
+
+    public void setSavedInsects(List<Insect> savedInsects) {
+        this.savedInsects = savedInsects;
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -132,6 +151,9 @@ public class User {
         private String avatarUrl;
         private int goodAnswers;
         private int badAnswers;
+
+        private List<Insect> savedInsects = new ArrayList<>();
+
 
         public UserBuilder username(String username) {
             this.username = username;
@@ -157,7 +179,10 @@ public class User {
             this.avatarUrl = avatarUrl;
             return this;
         }
-
+       public UserBuilder savedInsects(List<Insect> savedInsects) {
+            this.savedInsects = savedInsects;
+            return this;
+       }
         public User build() {
             return new User(this);
         }

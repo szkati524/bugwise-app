@@ -2,6 +2,7 @@ package com.example.bugwise.controller;
 
 import com.example.bugwise.dto.InsectDTO;
 import com.example.bugwise.entity.Insect;
+import com.example.bugwise.repository.InsectRepository;
 import com.example.bugwise.service.InsectService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,14 +18,18 @@ public class InsectController {
 
     private final InsectService insectService;
 
+
     @Autowired
     public InsectController(InsectService insectService) {
         this.insectService = insectService;
+
     }
 
     @GetMapping
-    public ResponseEntity<List<InsectDTO>> getAll(){
-    return ResponseEntity.ok(insectService.getAllInsects());
+    public ResponseEntity<List<InsectDTO>> getAllInsects(){
+List<InsectDTO> insects = insectService.getAllInsects();
+
+    return ResponseEntity.ok(insects);
     }
     @GetMapping("/{id}")
     public ResponseEntity<InsectDTO> getById(@PathVariable Long id){

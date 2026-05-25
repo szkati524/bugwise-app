@@ -4,7 +4,7 @@ import java.util.List;
 
 public record QuestionDTO(
         Long id,
-        String contnet,
+        String content,
         List<String> options,
         String correctAnswer
 

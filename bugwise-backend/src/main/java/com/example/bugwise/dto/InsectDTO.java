@@ -30,7 +30,8 @@ public record InsectDTO(
         String dangerLevel,
         @NotBlank(message = "Danger level code is required")
         @Size(min = 1, max = 10, message = "Code should be concise")
-        String dangerLevelCode
+        String dangerLevelCode,
+        List<QuestionDTO> templateQuestions
 
 ) {}
 

@@ -3,16 +3,16 @@ package com.example.bugwise.service;
 import com.example.bugwise.dto.InsectDTO;
 import com.example.bugwise.dto.InsectQuizDTO;
 import com.example.bugwise.dto.QuestionDTO;
-import com.example.bugwise.dto.TagDTO;
 import com.example.bugwise.entity.Insect;
 import com.example.bugwise.entity.Tag;
+import com.example.bugwise.entity.User;
 import com.example.bugwise.mapper.InsectMapper;
 import com.example.bugwise.repository.*;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,15 +28,17 @@ public class InsectService {
     private final InsectFamilyRepository insectFamilyRepository;
     private final TagRepository tagRepository;
     private final InsectMapper insectMapper;
+    private final UserRepository userRepository;
 
     @Autowired
-    public InsectService(InsectRepository insectRepository, HabitatRepository habitatRepository, InsectOrderRepository insectOrderRepository, InsectFamilyRepository insectFamilyRepository, TagRepository tagRepository, InsectMapper insectMapper) {
+    public InsectService(InsectRepository insectRepository, HabitatRepository habitatRepository, InsectOrderRepository insectOrderRepository, InsectFamilyRepository insectFamilyRepository, TagRepository tagRepository, InsectMapper insectMapper, UserRepository userRepository) {
         this.insectRepository = insectRepository;
         this.habitatRepository = habitatRepository;
         this.insectOrderRepository = insectOrderRepository;
         this.insectFamilyRepository = insectFamilyRepository;
         this.tagRepository = tagRepository;
         this.insectMapper = insectMapper;
+        this.userRepository = userRepository;
     }
     @Transactional
     public InsectDTO addInsect(InsectDTO dto){
@@ -62,12 +64,15 @@ public class InsectService {
        return insectMapper.toDTO(insectRepository.save(insect));
     }
 
-    public List<InsectDTO> getAllInsects(){
-       List<Insect> insects = insectRepository.findAllWithBasicInfo();
-       insects = insectRepository.fetchTags(insects);
-       return insects.stream()
-               .map(insectMapper::toDTO)
-               .toList();
+    public List<InsectDTO> getAllInsects() {
+        List<Insect> insects = insectRepository.findAllWithBasicInfo();
+        if (!insects.isEmpty()) {
+            insects = insectRepository.fetchQuestions(insects);
+            insects = insectRepository.fetchTags(insects);
+        }
+        return insects.stream()
+                .map(insectMapper::toDTO)
+                .toList();
     }
     public InsectDTO getInsectById(Long id){
         return insectRepository.findById(id).map(insectMapper::toDTO).orElseThrow(() -> new EntityNotFoundException("Insect with id " + id + " not found"));
@@ -90,23 +95,60 @@ return insectRepository.findById(id)
         }
         insectRepository.deleteById(id);
     }
-    public List<InsectQuizDTO> getInsectForQuiz(List<Long> ids){
+
+
+
+
+    public List<InsectDTO> getInsectForQuiz(List<Long> ids) {
+
         List<Insect> insects = insectRepository.findAllByIdsWithQuestions(ids);
-                return insects.stream()
-                        .map(insect -> {
-                            List<QuestionDTO> questionDTOS = insect.getTemplateQuestions().stream()
-                                    .map(q -> new QuestionDTO(
-                                            q.getId(),
-                                            q.getContent(),
-                                            new ArrayList<>(q.getOptions()),
-                                            q.getCorrectAnswer()
-                                    ))
-                                    .toList();
-                            return new InsectQuizDTO(insect.getId(),insect.getCommonName(),questionDTOS);
-                        })
-                        .toList();
 
 
+        return insects.stream()
+                .map(insectMapper::toDTO)
+                .toList();
+    }
+@Transactional(readOnly = true)
+    public List<InsectDTO> getInsectForQuizByEmail(String email){
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found " + email));
+        List<Insect> savedInsects = user.getSavedInsects();
+        if (savedInsects.isEmpty()){
+            return new ArrayList<>();
+        }
+        List<Long> ids = savedInsects.stream().map(Insect::getId).toList();
+        return getInsectForQuiz(ids);
+
+
+    }
+    @Transactional
+    public boolean toggleInsectInQuiz(String email, Long insectId) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + email));
+
+        Insect insect = insectRepository.findById(insectId)
+                .orElseThrow(() -> new EntityNotFoundException("Insect not found: " + insectId));
+
+        List<Insect> savedList = user.getSavedInsects();
+
+
+        boolean alreadyExists = savedList.stream()
+                .anyMatch(i -> i.getId().equals(insectId));
+
+        boolean isRemoved;
+        if (alreadyExists) {
+
+            savedList.removeIf(i -> i.getId().equals(insectId));
+            isRemoved = true;
+        } else {
+            savedList.add(insect);
+            isRemoved = false;
+        }
+
+
+        userRepository.save(user);
+
+        return isRemoved;
     }
 
     }

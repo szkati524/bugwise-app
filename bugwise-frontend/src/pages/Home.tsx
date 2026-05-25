@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"; // WAŻNE: Import nawigacji
+import { Link } from "react-router-dom"; 
 import "../App.css"; 
 import { Button } from "@/components/ui/button";
 import { Bug, LogIn, UserPlus, ArrowRight } from "lucide-react";

@@ -24,9 +24,9 @@ export function Login() {
 
     try {
       
-      const response = await axios.post("http://localhost:8081/api/auth/login", {
-        email: email,
-        password: password,
+      const response = await axios.post("http://localhost:8083/api/auth/login", {
+        email: "admin@bugwise.com",
+        password: "admin123",
       });
 
       
@@ -60,7 +60,7 @@ export function Login() {
         <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 p-10 rounded-[2.5rem] shadow-2xl">
           <form className="space-y-6" onSubmit={handleLogin}>
             
-            {/* Pole Email */}
+   
             <div className="space-y-2">
               <Label className="text-zinc-400 ml-1 flex items-center gap-2 uppercase text-[10px] font-black tracking-[0.2em]">
                 <Mail size={12} className="text-lime-500" /> Adres Email
