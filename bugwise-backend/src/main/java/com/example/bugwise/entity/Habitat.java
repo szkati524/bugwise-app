@@ -25,6 +25,10 @@ public class Habitat {
 
     }
 
+    public Habitat(String name) {
+
+    }
+
     public Long getId() {
         return id;
     }

@@ -29,7 +29,7 @@ interface FamilyData {
 export function AddInsect() {
   const navigate = useNavigate();
 
-  // Stany formularza głównego owada
+
   const [commonName, setCommonName] = useState("");
   const [latinName, setLatinName] = useState(""); 
   const [englishName, setEnglishName] = useState("");
@@ -67,7 +67,7 @@ export function AddInsect() {
     DANGEROUS: "CRIT"
   };
 
-  // Ładowanie list z bazy danych podczas montowania komponentu
+
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
@@ -99,7 +99,7 @@ export function AddInsect() {
     }
   };
 
-  // Poprawiona obsługa wyboru rodziny z bazy na podstawie nazwy
+
   const handleFamilySelection = (selectedName: string) => {
     if (!selectedName) {
       setFamilyName("");

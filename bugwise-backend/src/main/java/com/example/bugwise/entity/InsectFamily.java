@@ -22,6 +22,11 @@ public class InsectFamily {
 
     }
 
+    public InsectFamily(String name, String latinName) {
+
+
+    }
+
     public Long getId() {
         return id;
     }

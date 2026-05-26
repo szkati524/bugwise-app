@@ -20,31 +20,31 @@ public class Insect {
    private String latinName;
     @Column(unique = true)
    private String englishName;
-   @ManyToOne
+   @ManyToOne(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
    @JoinColumn(name = "order_id")
     private InsectOrder insectOrder;
-   @ManyToOne
+   @ManyToOne(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
    @JoinColumn(name = "family_id")
     private InsectFamily insectFamily;
    @Column(columnDefinition = "TEXT")
     private String description;
-   @ManyToOne
+   @ManyToOne(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
    @JoinColumn(name = "habitat_id")
     private Habitat habitat;
 @OneToMany(cascade = CascadeType.ALL)
 @JoinColumn(name = "insect_id")
     private List<InsectImage> insectImage;
-   @ManyToMany
+   @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
    @JoinTable(name = "insect_tags",
    joinColumns= @JoinColumn(name = "insect_id"),
    inverseJoinColumns = @JoinColumn(name = "tag_id")
    )
-    private Set<Tag> tag = new HashSet<>();
+    private List<Tag> tag = new ArrayList<>();
     private boolean isProtected;
     @Enumerated(EnumType.STRING)
     private DangerLevel dangerLevel;
 
-    @OneToMany(mappedBy = "insect",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "insect",cascade = CascadeType.ALL,fetch = FetchType.EAGER,orphanRemoval = true)
     private List<Question> templateQuestions = new ArrayList<>();
 
     @ManyToMany(mappedBy = "savedInsects")
@@ -52,7 +52,7 @@ public class Insect {
 
 
 
-    public Insect(Long id, String commonName, String latinName, String englishName, InsectOrder insectOrder, InsectFamily insectFamily, String description, Habitat habitat, List<InsectImage> insectImage, Set<Tag> tag, boolean isProtected, DangerLevel dangerLevel,List<Question> templateQuestions,List<User> usersWhoSaved) {
+    public Insect(Long id, String commonName, String latinName, String englishName, InsectOrder insectOrder, InsectFamily insectFamily, String description, Habitat habitat, List<InsectImage> insectImage, List<Tag> tag, boolean isProtected, DangerLevel dangerLevel,List<Question> templateQuestions,List<User> usersWhoSaved) {
         this.id = id;
         this.commonName = commonName;
         this.latinName = latinName;
@@ -142,11 +142,11 @@ public class Insect {
         this.insectImage = insectImage;
     }
 
-    public Set<Tag> getTag() {
+    public List<Tag> getTag() {
         return tag;
     }
 
-    public void setTag(Set<Tag> tag) {
+    public void setTag(List<Tag> tag) {
         this.tag = tag;
     }
 

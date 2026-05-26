@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface InsectFamilyRepository extends JpaRepository<InsectFamily,Long> {
 
     Optional<InsectFamily> findByName(String name);
+    Optional<InsectFamily> findByLatinName(String latinName);
 }

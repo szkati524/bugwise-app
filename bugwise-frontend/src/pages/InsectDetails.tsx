@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { 
   ArrowLeft, Bug, ShieldCheck, ShieldAlert, 
-  MapPin, Layers, Tag, Loader2, Check, Plus 
+  MapPin, Layers, Tag, Loader2, Check, Plus, Edit 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -74,8 +74,6 @@ export function InsectDetails() {
   );
 
   const isAdded = savedInsectIds.includes(insect.id);
-
-  // Dostosowane do tablicy stringów 'imageUrls' z DTO
   const imageUrl = insect.imageUrls && insect.imageUrls.length > 0 
     ? insect.imageUrls[0] 
     : "https://images.unsplash.com/photo-1470240731273-7821a6eeb6bd?auto=format&fit=crop&q=80&w=1000";
@@ -93,45 +91,19 @@ export function InsectDetails() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* LEWA KOLUMNA: GRAFIKA I STATYSTYKI */}
           <div className="lg:col-span-5 space-y-6 sticky top-6">
             <div className="relative aspect-[4/3] md:aspect-square bg-zinc-900 rounded-[2.5rem] border border-zinc-800 overflow-hidden shadow-2xl group">
-              <img 
-                src={imageUrl} 
-                alt={insect.commonName} 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-              />
+              <img src={imageUrl} alt={insect.commonName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
             </div>
 
             <div className="bg-zinc-900/40 backdrop-blur-md border border-zinc-800/80 p-6 rounded-3xl space-y-4 shadow-xl">
               <div className="flex items-center justify-between">
                 <span className="text-zinc-400 font-medium flex items-center gap-2">
-                  <ShieldCheck size={18} className="text-lime-500" /> Ochrona gatunkowa:
+                  <ShieldCheck size={18} className="text-lime-500" /> Ochrona:
                 </span>
-                <span className={`text-sm font-black px-3 py-1 rounded-full border uppercase ${
-                  insect.isProtected
-                    ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
-                    : "text-zinc-500 bg-zinc-800/30 border-zinc-700/50"
-                }`}>
+                <span className={`text-sm font-black px-3 py-1 rounded-full border uppercase ${insect.isProtected ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" : "text-zinc-500 bg-zinc-800/30 border-zinc-700/50"}`}>
                   {insect.isProtected ? "Tak (Chroniony)" : "Nie chroniony"}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-zinc-400 font-medium flex items-center gap-2">
-                  <ShieldAlert size={18} className="text-amber-500" /> Poziom zagrożenia:
-                </span>
-                <span className={`text-sm font-black px-3 py-1 rounded-full border uppercase ${
-                  insect.dangerLevel === "DANGEROUS" 
-                    ? "text-red-400 bg-red-500/10 border-red-500/20"
-                    : insect.dangerLevel === "PAINFUL"
-                    ? "text-amber-400 bg-amber-500/10 border-amber-500/20"
-                    : insect.dangerLevel === "ANNOYING"
-                    ? "text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
-                    : "text-lime-400 bg-lime-500/10 border-lime-500/20"
-                }`}>
-                  {insect.dangerLevel || "HARMLESS"}
                 </span>
               </div>
             </div>
@@ -139,104 +111,51 @@ export function InsectDetails() {
             <Button 
               onClick={toggleInsectInQuiz}
               className={`w-full h-14 rounded-2xl border font-black text-md transition-all flex items-center justify-center gap-3 active:scale-[0.98] shadow-lg ${
-                isAdded 
-                  ? "bg-lime-500 border-lime-400 text-black shadow-lime-500/10 hover:bg-lime-400" 
-                  : "bg-zinc-900/60 border-zinc-800 text-zinc-300 hover:border-lime-500/40 hover:text-lime-500"
+                isAdded ? "bg-lime-500 border-lime-400 text-black hover:bg-lime-400" : "bg-zinc-900/60 border-zinc-800 text-zinc-300 hover:border-lime-500/40 hover:text-lime-500"
               }`}
             >
-              {isAdded ? (
-                <>
-                  <Check size={20} strokeWidth={3} /> Usuń ze swoich quizów
-                </>
-              ) : (
-                <>
-                  <Plus size={20} strokeWidth={3} /> Dodaj do puli testowej
-                </>
-              )}
+              {isAdded ? <><Check size={20} strokeWidth={3} /> Usuń z quizów</> : <><Plus size={20} strokeWidth={3} /> Dodaj do puli</>}
+            </Button>
+
+            <Button 
+              onClick={() => navigate(`/insects/edit/${id}`)}
+              className="w-full h-14 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold flex items-center justify-center gap-2"
+            >
+              <Edit size={18} /> Edytuj informacje
             </Button>
           </div>
 
-          {/* PRAWA KOLUMNA: OPISY I TAKSONOMIA */}
           <div className="lg:col-span-7 space-y-8">
             <div>
               <div className="flex items-center gap-2 text-lime-500 font-black uppercase tracking-[0.2em] text-xs mb-2">
                 <Bug size={14} /> Szczegóły gatunku
               </div>
-              <h1 className="text-5xl md:text-6xl font-black text-white tracking-tight leading-tight mb-2">
-                {insect.commonName}
-              </h1>
-              <p className="text-lg text-zinc-500 italic font-medium">
-                {insect.latinName} {insect.englishName ? `— (${insect.englishName})` : ""}
-              </p>
+              <h1 className="text-5xl font-black text-white tracking-tight leading-tight mb-2">{insect.commonName}</h1>
+              <p className="text-lg text-zinc-500 italic font-medium">{insect.latinName}</p>
             </div>
 
-            {/* SŁOWNIKI TAKSONOMICZNE PRZEPIĘTE POD POLA Z DTO */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-zinc-900/30 border border-zinc-800 p-5 rounded-2xl">
-                <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                  <Layers size={12} /> Rząd
-                </div>
-                <div className="text-white font-black text-lg">
-                  {insect.orderName || "Brak informacji"}
-                </div>
-                <div className="text-zinc-500 text-xs italic">
-                  {insect.orderLatinName || ""}
-                </div>
+                <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5"><Layers size={12} /> Rząd</div>
+                <div className="text-white font-black text-lg">{insect.orderName || "Brak"}</div>
               </div>
-
               <div className="bg-zinc-900/30 border border-zinc-800 p-5 rounded-2xl">
-                <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                  <Layers size={12} /> Rodzina
-                </div>
-                <div className="text-white font-black text-lg">
-                  {insect.familyName || "Brak informacji"}
-                </div>
-                <div className="text-zinc-500 text-xs italic">
-                  {insect.familyLatinName || ""}
-                </div>
+                <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5"><Layers size={12} /> Rodzina</div>
+                <div className="text-white font-black text-lg">{insect.familyName || "Brak"}</div>
               </div>
-
               <div className="bg-zinc-900/30 border border-zinc-800 p-5 rounded-2xl">
-                <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                  <MapPin size={12} /> Siedlisko
-                </div>
-                <div className="text-white font-black text-lg">
-                  {insect.habitatName || "Brak informacji"}
-                </div>
-                <div className="text-zinc-500 text-xs">
-                  Słownikowe
-                </div>
+                <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5"><MapPin size={12} /> Siedlisko</div>
+                <div className="text-white font-black text-lg">{insect.habitatName || "Brak"}</div>
               </div>
             </div>
 
-            {/* TAGI DOPASOWANE DO TABLICY STRINGÓW 'tags' */}
-            {insect.tags && insect.tags.length > 0 && (
-              <div className="space-y-2">
-                <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <Tag size={12} /> Tagi / Cechy charakterystyczne
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {insect.tags.map((tagName: string, index: number) => (
-                    <span key={index} className="text-xs font-bold px-3 py-1.5 bg-zinc-800/60 border border-zinc-700/60 text-zinc-300 rounded-xl">
-                      #{tagName}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-6 pt-4 border-t border-zinc-800/60">
-              <div className="space-y-3">
-                <h3 className="text-xl font-black text-white">Opis gatunku</h3>
-                <p className="text-zinc-400 text-md leading-relaxed whitespace-pre-line">
-                  {insect.description || "Brak szczegółowego opisu w bazie danych dla tego gatunku."}
-                </p>
-              </div>
+            <div className="space-y-3">
+              <h3 className="text-xl font-black text-white">Opis gatunku</h3>
+              <p className="text-zinc-400 text-md leading-relaxed">{insect.description || "Brak opisu."}</p>
             </div>
-
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
   );

@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface InsectOrderRepository extends JpaRepository<InsectOrder,Long> {
 
     Optional<InsectOrder> findByName(String name);
+    Optional<InsectOrder> findByLatinName(String latinName);
 }

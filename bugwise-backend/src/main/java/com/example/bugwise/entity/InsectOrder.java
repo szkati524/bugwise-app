@@ -25,6 +25,10 @@ public class InsectOrder {
 
     }
 
+    public InsectOrder(String name, String latinName) {
+
+    }
+
     public Long getId() {
         return id;
     }

@@ -12,6 +12,7 @@ import { Categories } from "./pages/Categories";
 import { InsectDetails } from "./pages/InsectDetails";
 import { Ranking } from "./pages/Ranking";
 import { AddInsect } from "./pages/AddInsect";
+import { EditInsect } from "./pages/EditInsect";
 function App() {
   return (
     <BrowserRouter>
@@ -30,6 +31,7 @@ function App() {
         <Route path ="insects/:id" element={<InsectDetails />} />
         <Route path ="/ranking" element={<Ranking />} />
         <Route path="add-insect" element={<AddInsect /> } />
+        <Route path="/insects/edit/:id" element={<EditInsect />} />
       </Routes>
     </BrowserRouter>
   );

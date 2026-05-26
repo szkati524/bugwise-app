@@ -7,11 +7,13 @@ import com.example.bugwise.enums.DangerLevel;
 import com.example.bugwise.repository.HabitatRepository;
 import com.example.bugwise.repository.InsectFamilyRepository;
 import com.example.bugwise.repository.InsectOrderRepository;
+import com.example.bugwise.repository.TagRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class InsectMapper {
@@ -22,6 +24,8 @@ public class InsectMapper {
     private InsectFamilyRepository familyRepository;
     @Autowired
     private HabitatRepository habitatRepository;
+    @Autowired
+    private TagRepository tagRepository;
 
     public InsectDTO toDTO(Insect insect){
         if (insect == null) return null;
@@ -56,7 +60,7 @@ public class InsectMapper {
         );
     }
 
-    public void updateEntityFromDTO(InsectDTO dto, Insect insect){
+    public void updateEntityFromDTO(InsectDTO dto, Insect insect) {
         if (dto == null) return;
 
 
@@ -66,48 +70,11 @@ public class InsectMapper {
         insect.setDescription(dto.description());
         insect.setProtected(dto.isProtected());
 
-
         if (dto.dangerLevel() != null) {
             insect.setDangerLevel(DangerLevel.valueOf(dto.dangerLevel()));
         }
 
 
-        if (dto.orderName() != null && !dto.orderName().isBlank()) {
-            InsectOrder order = orderRepository.findByName(dto.orderName())
-                    .orElseGet(() -> {
-                        InsectOrder newOrder = new InsectOrder();
-                        newOrder.setName(dto.orderName());
-
-                        newOrder.setLatinName(dto.orderLatinName() != null ? dto.orderLatinName() : dto.orderName());
-                        return orderRepository.save(newOrder);
-                    });
-            insect.setInsectOrder(order);
-        }
-
-
-        if (dto.familyName() != null && !dto.familyName().isBlank()) {
-            InsectFamily family = familyRepository.findByName(dto.familyName())
-                    .orElseGet(() -> {
-                        InsectFamily newFamily = new InsectFamily();
-                        newFamily.setName(dto.familyName());
-
-                        newFamily.setLatinName(dto.familyLatinName() != null ? dto.familyLatinName() : dto.familyName());
-                        return familyRepository.save(newFamily);
-                    });
-            insect.setInsectFamily(family);
-        }
-
-
-        if (dto.habitatName() != null && !dto.habitatName().isBlank()) {
-            Habitat habitat = habitatRepository.findByName(dto.habitatName())
-                    .orElseGet(() -> {
-                        Habitat newHabitat = new Habitat();
-                        newHabitat.setName(dto.habitatName());
-
-                        newHabitat.setType("TERRESTRIAL");
-                        return habitatRepository.save(newHabitat);
-                    });
-            insect.setHabitat(habitat);
-        }
     }
 }
+
