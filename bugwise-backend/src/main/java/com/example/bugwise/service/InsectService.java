@@ -3,9 +3,7 @@ package com.example.bugwise.service;
 import com.example.bugwise.dto.InsectDTO;
 import com.example.bugwise.dto.InsectQuizDTO;
 import com.example.bugwise.dto.QuestionDTO;
-import com.example.bugwise.entity.Insect;
-import com.example.bugwise.entity.Tag;
-import com.example.bugwise.entity.User;
+import com.example.bugwise.entity.*;
 import com.example.bugwise.mapper.InsectMapper;
 import com.example.bugwise.repository.*;
 import jakarta.persistence.EntityNotFoundException;
@@ -44,21 +42,50 @@ public class InsectService {
     public InsectDTO addInsect(InsectDTO dto){
        Insect insect = new Insect();
        insectMapper.updateEntityFromDTO(dto,insect);
-
-       habitatRepository.findByName(dto.habitatName())
+Habitat habitat = habitatRepository.findByName(dto.habitatName())
                .stream().findFirst()
-                       .ifPresentOrElse(insect::setHabitat,
-                               () -> {throw new EntityNotFoundException("Habitat not found " + dto.habitatName());});
-       insectOrderRepository.findByName(dto.orderName())
-                       .ifPresent(insect::setInsectOrder);
-       insectFamilyRepository.findByName(dto.familyName())
-                       .ifPresent(insect::setInsectFamily);
-       if (dto.tags() != null) {
+        .orElseGet(() -> {
+            Habitat newHabitat = new Habitat();
+            newHabitat.setName(dto.habitatName());
+            return habitatRepository.save(newHabitat);
+        });
+insect.setHabitat(habitat);
+                          InsectOrder order = insectOrderRepository.findByName(dto.orderName())
+                                          .orElseGet(() -> {
+                                              InsectOrder newOrder = new InsectOrder();
+                                              newOrder.setName(dto.orderName());
+                                              newOrder.setLatinName(dto.orderLatinName() != null ? dto.orderLatinName() :  dto.latinName());
+                                              newOrder.setDescription("Automatycznie utworzony rząd dla : " + dto.orderName());
+                                              return insectOrderRepository.save(newOrder);
+                                          });
+                          insect.setInsectOrder(order);
+       InsectFamily family = insectFamilyRepository.findByName(dto.familyName())
+               .orElseGet(() -> {
+                   InsectFamily newFamily = new InsectFamily();
+                   newFamily.setName(dto.familyName());
+                   newFamily.setLatinName(dto.familyLatinName() != null ? dto.familyLatinName() : dto.familyName());
+                   return insectFamilyRepository.save(newFamily);
+               });
+       insect.setInsectFamily(family);
+       if (dto.templateQuestions() != null){
+           List<Question> questions = dto.templateQuestions().stream().map(qDto -> {
+               Question q = new Question();
+               q.setContent(qDto.content());
+               q.setOptions(qDto.options());
+               q.setCorrectAnswer(qDto.correctAnswer());
+               q.setInsect(insect);
+               return q;
+
+           }).toList();
+           insect.setTemplateQuestions(questions);
+       }
+       if (dto.tags() != null){
            Set<Tag> insectTags = dto.tags().stream()
                    .map(tagName -> tagRepository.findByName(tagName)
                            .orElseGet(() -> tagRepository.save(new Tag(tagName))))
                    .collect(Collectors.toSet());
            insect.setTag(insectTags);
+           System.out.println("tagi " + dto.tags());
        }
 
        return insectMapper.toDTO(insectRepository.save(insect));

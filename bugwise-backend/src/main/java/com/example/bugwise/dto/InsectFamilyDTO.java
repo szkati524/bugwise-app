@@ -9,5 +9,5 @@ public record InsectFamilyDTO(Long id,
                               String name,
                               @NotBlank(message = "Latin name is required")
                                       @Size(min = 2,max= 50)
-                              String latinName) {
+                              String familyLatinName) {
 }

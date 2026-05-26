@@ -17,11 +17,13 @@ public record InsectDTO(
         String description,
         @NotBlank(message = "Order name is required")
         String orderName,
+        String orderLatinName,
         @NotBlank(message = "Family name is required")
         String familyName,
+        String familyLatinName,
         @NotBlank(message = "Habitat name is required")
         String habitatName,
-        @NotEmpty(message = "At least one image URL is required")
+
         List<String> imageUrls,
         @NotEmpty(message = "At least one tag is required")
         List<String> tags,

@@ -18,7 +18,7 @@ return new InsectFamilyDTO(
     public void updateFamilyFromDTO(InsectFamilyDTO dto,InsectFamily entity){
         if (dto == null || entity == null) return;
         entity.setName(dto.name());
-        entity.setLatinName(dto.latinName());
+        entity.setLatinName(dto.familyLatinName());
     }
     public InsectFamily toEntity(InsectFamilyDTO dto){
         if (dto == null) return null;

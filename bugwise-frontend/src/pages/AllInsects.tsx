@@ -92,7 +92,7 @@ export function AllInsects() {
   return (
     <div className="flex min-h-screen hero-pattern text-zinc-100 font-sans">
       
-      {/* SIDEBAR */}
+      
       <aside className="w-64 bg-lime-600/95 backdrop-blur-md flex flex-col shadow-2xl border-r border-white/10 sticky top-0 h-screen">
         <div className="p-6 flex items-center gap-3 border-b border-white/10">
           <div className="bg-white/20 p-2 rounded-lg"><Bug className="text-white fill-white" size={24} /></div>

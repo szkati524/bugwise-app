@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { 
@@ -14,29 +14,112 @@ interface QuestionForm {
   correctAnswer: string;
 }
 
+interface OrderData {
+  id: number;
+  name: string;
+  orderLatinName: string; 
+}
+
+interface FamilyData {
+  id: number;
+  name: string;
+  familyLatinName: string; 
+}
+
 export function AddInsect() {
   const navigate = useNavigate();
 
-  // Stany formularza zgodne z polami InsectDTO
+  // Stany formularza głównego owada
   const [commonName, setCommonName] = useState("");
-  const [latinName, setLatinName] = useState("");
+  const [latinName, setLatinName] = useState(""); 
   const [englishName, setEnglishName] = useState("");
   const [description, setDescription] = useState("");
-  const [orderName, setOrderName] = useState("");
-  const [familyName, setFamilyName] = useState("");
   const [habitatName, setHabitatName] = useState("");
-  const [imageUrl, setImageUrl] = useState(""); // Zbieramy link URL jako tekst
+  const [imageUrl, setImageUrl] = useState(""); 
   const [tags, setTags] = useState("");
   const [isProtected, setIsProtected] = useState(false);
-  const [dangerLevel, setDangerLevel] = useState("Niski"); // display name
-  const [dangerLevelCode, setDangerLevelCode] = useState("LOW"); // kod walidowany przez @Size
+  const [dangerLevel, setDangerLevel] = useState("HARMLESS");
+  const [dangerLevelCode, setDangerLevelCode] = useState("SAFE");
 
-  // Stan dynamicznej listy pytań
+ 
+  const [existingOrders, setExistingOrders] = useState<OrderData[]>([]);
+  const [existingFamilies, setExistingFamilies] = useState<FamilyData[]>([]);
+
+ 
+  const [selectedOrderType, setSelectedOrderType] = useState("existing"); 
+  const [orderName, setOrderName] = useState("");
+  const [orderLatinName, setOrderLatinName] = useState(""); 
+
+  const [selectedFamilyType, setSelectedFamilyType] = useState("existing"); 
+  const [familyName, setFamilyName] = useState("");
+  const [familyLatinName, setFamilyLatinName] = useState(""); 
+
+  
   const [questions, setQuestions] = useState<QuestionForm[]>([
     { content: "", options: ["", "", "", ""], correctAnswer: "" }
   ]);
 
-  // Dynamiczne zarządzanie pytaniami
+
+  const dangerCodes: Record<string, string> = {
+    HARMLESS: "SAFE",
+    ANNOYING: "WARN",
+    PAINFUL: "PAIN",
+    DANGEROUS: "CRIT"
+  };
+
+  // Ładowanie list z bazy danych podczas montowania komponentu
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      try {
+        const ordersRes = await axios.get("http://localhost:8083/api/orders");
+        const familiesRes = await axios.get("http://localhost:8083/api/families");
+        
+        setExistingOrders(ordersRes.data || []);
+        setExistingFamilies(familiesRes.data || []);
+      } catch (err) {
+        console.error("Nie udało się pobrać list taksonomicznych z bazy:", err);
+      }
+    };
+    fetchDropdownData();
+  }, []);
+
+  // Poprawiona obsługa wyboru rzędu z bazy na podstawie nazwy
+  const handleOrderSelection = (selectedName: string) => {
+    if (!selectedName) {
+      setOrderName("");
+      setOrderLatinName("");
+      return;
+    }
+    const found = existingOrders.find(o => o.name === selectedName);
+    if (found) {
+      setOrderName(found.name);
+      setOrderLatinName(found.orderLatinName);
+    } else {
+      setOrderName(selectedName);
+    }
+  };
+
+  // Poprawiona obsługa wyboru rodziny z bazy na podstawie nazwy
+  const handleFamilySelection = (selectedName: string) => {
+    if (!selectedName) {
+      setFamilyName("");
+      familyLatinName("");
+      return;
+    }
+    const found = existingFamilies.find(f => f.name === selectedName);
+    if (found) {
+      setFamilyName(found.name);
+      setFamilyLatinName(found.familyLatinName);
+    } else {
+      setFamilyName(selectedName);
+    }
+  };
+
+  const handleDangerChange = (enumValue: string) => {
+    setDangerLevel(enumValue);
+    setDangerLevelCode(dangerCodes[enumValue] || "SAFE");
+  };
+
   const addQuestion = () => {
     setQuestions([...questions, { content: "", options: ["", "", "", ""], correctAnswer: "" }]);
   };
@@ -67,45 +150,50 @@ export function AddInsect() {
     setQuestions(updated);
   };
 
-  // Funkcja wysyłająca dane do backendu
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. Parsowanie tagów do tablicy stringów
     const tagsArray = tags.split(",").map(tag => tag.trim()).filter(tag => tag !== "");
+    const validQuestions = questions
+      .filter(q => q.content.trim() !== "" && q.correctAnswer !== "")
+      .map(q => ({
+        content: q.content.trim(),
+        options: q.options.map(o => o.trim()),
+        correctAnswer: q.correctAnswer.trim()
+      }));
 
-    // 2. Budowanie struktury DTO dokładnie pod rekord javowy
     const insectDTO = {
-      commonName: commonName,
-      latinName: latinName,
-      englishName: englishName || null,
-      description: description,
-      orderName: orderName,
-      familyName: familyName,
-      habitatName: habitatName,
-      imageUrls: [imageUrl], // Twoje DTO oczekuje listy URLi: List<String>
+      commonName: commonName.trim(),
+      latinName: latinName.trim(), 
+      englishName: englishName.trim() || null,
+      description: description.trim() || null,
+      
+     
+      orderName: orderName.trim(),
+      orderLatinName: orderLatinName.trim(), 
+      
+      familyName: familyName.trim(),
+      familyLatinName: familyLatinName.trim(), 
+      
+      habitatName: habitatName.trim(),
+      imageUrls: imageUrl.trim() !== "" ? [imageUrl.trim()] : [],
       tags: tagsArray,
       isProtected: isProtected,
-      dangerLevel: dangerLevel,
-      dangerLevelCode: dangerLevelCode,
-      templateQuestions: questions.map(q => ({
-        content: q.content,
-        options: q.options,
-        correctAnswer: q.correctAnswer
-      })) // nazwa pola w rekordzie to templateQuestions
+      dangerLevel: dangerLevel,      
+      dangerLevelCode: dangerLevelCode,   
+      templateQuestions: validQuestions
     };
 
     try {
-      // Wywołanie Twojego @PostMapping kontrolera
       const response = await axios.post("http://localhost:8083/api/insects", insectDTO);
-      
       if (response.status === 201 || response.status === 200) {
         alert("Owada pomyślnie dodano do bazy danych BugWise!");
         navigate("/all-insects");
       }
     } catch (error: any) {
-      console.error("Błąd podczas dodawania owada:", error);
-      alert(`Nie udało się zapisać owada: ${error.response?.data?.message || error.message}`);
+      console.error("Błąd walidacji po stronie serwera:", error);
+      alert(`Błąd: ${JSON.stringify(error.response?.data) || error.message}`);
     }
   };
 
@@ -117,7 +205,7 @@ export function AddInsect() {
   return (
     <div className="flex min-h-screen hero-pattern text-zinc-100 font-sans">
       
-      {/* SIDEBAR */}
+  
       <aside className="w-64 bg-lime-600/95 backdrop-blur-md flex flex-col shadow-2xl border-r border-white/10 sticky top-0 h-screen z-20">
         <div className="p-6 flex items-center gap-3 border-b border-white/10">
           <div className="bg-white/20 p-2 rounded-lg"><Bug className="text-white fill-white" size={24} /></div>
@@ -138,7 +226,7 @@ export function AddInsect() {
         </div>
       </aside>
 
-      {/* GŁÓWNY PANEL */}
+     
       <main className="flex-grow p-12 overflow-y-auto">
         <header className="mb-12">
           <div className="flex items-center gap-4 mb-2 text-lime-500 font-bold uppercase tracking-[0.3em] text-xs">
@@ -151,7 +239,7 @@ export function AddInsect() {
 
         <form onSubmit={handleSubmit} className="max-w-4xl space-y-8 pb-24">
           
-          {/* SEKCJA 1: TAKSONOMIA */}
+         
           <div className="bg-zinc-900/40 backdrop-blur-md border border-zinc-800 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
             <h2 className="text-2xl font-black text-white flex items-center gap-3">
               <FileText className="text-lime-500" size={24} /> Dane podstawowe i taksonomia
@@ -163,26 +251,66 @@ export function AddInsect() {
                 <input type="text" required placeholder="np. Biedronka siedmiokropka" value={commonName} onChange={(e) => setCommonName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-zinc-100 focus:outline-none focus:border-lime-500 transition-colors" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-zinc-400">Nazwa łacińska *</label>
+                <label className="text-sm font-bold text-zinc-400">Nazwa łacińska owada *</label>
                 <input type="text" required placeholder="np. Coccinella septempunctata" value={latinName} onChange={(e) => setLatinName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-zinc-100 italic focus:outline-none focus:border-lime-500 transition-colors" />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-bold text-zinc-400">Nazwa angielska</label>
                 <input type="text" placeholder="np. Seven-spot ladybird" value={englishName} onChange={(e) => setEnglishName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-zinc-100 focus:outline-none focus:border-lime-500 transition-colors" />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-zinc-400">Rząd (Order) *</label>
-                <input type="text" required placeholder="np. Chrząszcze (Coleoptera)" value={orderName} onChange={(e) => setOrderName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-zinc-100 focus:outline-none focus:border-lime-500 transition-colors" />
+
+            
+              <div className="space-y-2 border border-zinc-800/60 p-4 rounded-2xl bg-zinc-950/20">
+                <label className="text-sm font-bold text-zinc-400 block">Rząd (Order) *</label>
+                <div className="flex gap-4 mb-3">
+                  <button type="button" onClick={() => { setSelectedOrderType("existing"); setOrderName(""); setOrderLatinName(""); }} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedOrderType === "existing" ? "bg-lime-600 text-white" : "bg-zinc-800 text-zinc-400"}`}>Wybierz z bazy</button>
+                  <button type="button" onClick={() => { setSelectedOrderType("new"); setOrderName(""); setOrderLatinName(""); }} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedOrderType === "new" ? "bg-lime-600 text-white" : "bg-zinc-800 text-zinc-400"}`}>+ Dodaj nowy rząd</button>
+                </div>
+                
+                {selectedOrderType === "existing" ? (
+                  <select required value={orderName} onChange={(e) => handleOrderSelection(e.target.value)} className="w-full h-14 bg-zinc-950 border border-zinc-800 rounded-xl px-4 text-zinc-300 focus:outline-none focus:border-lime-500">
+                    <option value="">-- Wybierz rząd z bazy --</option>
+                    {existingOrders.map((o, idx) => (
+                      <option key={idx} value={o.name}>{o.name} ({o.orderLatinName})</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="space-y-3">
+                    <input type="text" required placeholder="Nazwa polska rzędu" value={orderName} onChange={(e) => setOrderName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-zinc-100 focus:outline-none focus:border-lime-500" />
+                    <input type="text" required placeholder="Nazwa łacińska rzędu" value={orderLatinName} onChange={(e) => setOrderLatinName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-zinc-100 italic focus:outline-none focus:border-lime-500" />
+                  </div>
+                )}
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-zinc-400">Rodzina (Family) *</label>
-                <input type="text" required placeholder="np. Biedronkowate" value={familyName} onChange={(e) => setFamilyName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-zinc-100 focus:outline-none focus:border-lime-500 transition-colors" />
+
+             
+              <div className="space-y-2 border border-zinc-800/60 p-4 rounded-2xl bg-zinc-950/20">
+                <label className="text-sm font-bold text-zinc-400 block">Rodzina (Family) *</label>
+                <div className="flex gap-4 mb-3">
+                  <button type="button" onClick={() => { setSelectedFamilyType("existing"); setFamilyName(""); setFamilyLatinName(""); }} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedFamilyType === "existing" ? "bg-lime-600 text-white" : "bg-zinc-800 text-zinc-400"}`}>Wybierz z bazy</button>
+                  <button type="button" onClick={() => { setSelectedFamilyType("new"); setFamilyName(""); setFamilyLatinName(""); }} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedFamilyType === "new" ? "bg-lime-600 text-white" : "bg-zinc-800 text-zinc-400"}`}>+ Dodaj nową rodzinę</button>
+                </div>
+
+                {selectedFamilyType === "existing" ? (
+                  <select required value={familyName} onChange={(e) => handleFamilySelection(e.target.value)} className="w-full h-14 bg-zinc-950 border border-zinc-800 rounded-xl px-4 text-zinc-300 focus:outline-none focus:border-lime-500">
+                    <option value="">-- Wybierz rodzinę z bazy --</option>
+                    {existingFamilies.map((f, idx) => (
+                      <option key={idx} value={f.name}>{f.name} ({f.familyLatinName})</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="space-y-3">
+                    <input type="text" required placeholder="Nazwa polska rodziny" value={familyName} onChange={(e) => setFamilyName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-zinc-100 focus:outline-none focus:border-lime-500" />
+                    <input type="text" required placeholder="Nazwa łacińska rodziny" value={familyLatinName} onChange={(e) => setFamilyLatinName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-zinc-100 italic focus:outline-none focus:border-lime-500" />
+                  </div>
+                )}
               </div>
-              <div className="space-y-2">
+
+             
+              <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-bold text-zinc-400">Środowisko (Habitat) *</label>
                 <div className="relative">
                   <MapPin className="absolute left-4 top-4.5 text-zinc-600" size={18} />
-                  <input type="text" required placeholder="np. Pola, ogrody" value={habitatName} onChange={(e) => setHabitatName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 pl-12 text-zinc-100 focus:outline-none focus:border-lime-500 transition-colors" />
+                  <input type="text" required placeholder="np. Pola, ogrody, lasy" value={habitatName} onChange={(e) => setHabitatName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 pl-12 text-zinc-100 focus:outline-none focus:border-lime-500 transition-colors" />
                 </div>
               </div>
             </div>
@@ -201,8 +329,8 @@ export function AddInsect() {
             </div>
           </div>
 
-          {/* SEKCJA 2: WARUNKI I ZAGROŻENIA */}
-          <div className="bg-zinc-900/40 backdrop-blur-md border border-zinc-800 p-8 rounded-[2.5rem] shadow-2xl grid grid-cols-1 md:grid-cols-3 gap-6">
+       
+          <div className="bg-zinc-900/40 backdrop-blur-md border border-zinc-800 p-8 rounded-[2.5rem] shadow-2xl grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-bold text-zinc-400 flex items-center gap-2">
                 <Shield size={16} className="text-lime-500" /> Ochrona gatunkowa
@@ -217,25 +345,20 @@ export function AddInsect() {
               <label className="text-sm font-bold text-zinc-400 flex items-center gap-2">
                 <AlertTriangle size={16} className="text-lime-500" /> Poziom zagrożenia *
               </label>
-              <select value={dangerLevel} onChange={(e) => setDangerLevel(e.target.value)} className="w-full h-14 bg-zinc-950 border border-zinc-800 rounded-xl px-4 text-zinc-300 font-bold focus:outline-none focus:border-lime-500">
-                <option value="Brak">Brak zagrożenia</option>
-                <option value="Niski">Niski (np. ukąszenie boli)</option>
-                <option value="Średni">Średni (jad / silny odczyn)</option>
-                <option value="Wysoki">Wysoki (niebezpieczny)</option>
+              <select value={dangerLevel} onChange={(e) => handleDangerChange(e.target.value)} className="w-full h-14 bg-zinc-950 border border-zinc-800 rounded-xl px-4 text-zinc-300 font-bold focus:outline-none focus:border-lime-500 cursor-pointer">
+                <option value="HARMLESS">HARMLESS (Niegroźny)</option>
+                <option value="ANNOYING">ANNOYING (Irytujący / Dokuczliwy)</option>
+                <option value="PAINFUL">PAINFUL (Bolesny / Kąsający)</option>
+                <option value="DANGEROUS">DANGEROUS (Niebezpieczny dla zdrowia)</option>
               </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-zinc-400">Kod zagrożenia (1-10 znaków) *</label>
-              <input type="text" required placeholder="np. LOW, MED, NONE" value={dangerLevelCode} onChange={(e) => setDangerLevelCode(e.target.value)} className="w-full h-14 bg-zinc-950 border border-zinc-800 rounded-xl px-4 text-zinc-100 font-bold uppercase focus:outline-none focus:border-lime-500" />
             </div>
           </div>
 
-          {/* SEKCJA 3: LINK DO GRAPHICS */}
+        
           <div className="bg-zinc-900/40 backdrop-blur-md border border-zinc-800 p-8 rounded-[2.5rem] shadow-2xl space-y-4">
-            <label className="text-sm font-bold text-zinc-400 block">Link URL do zdjęcia owada (wymagany min. jeden) *</label>
+            <label className="text-sm font-bold text-zinc-400 block">Link URL do zdjęcia owada (opcjonalnie)</label>
             <div className="flex flex-col md:flex-row gap-4 items-center">
-              <input type="url" required placeholder="https://example.com/insect.png" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-zinc-100 text-sm focus:outline-none focus:border-lime-500" />
+              <input type="url" placeholder="https://example.com/insect.png" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-zinc-100 text-sm focus:outline-none focus:border-lime-500" />
               {imageUrl && (
                 <div className="w-20 h-14 rounded-xl bg-zinc-950 border border-zinc-800 overflow-hidden shrink-0 flex items-center justify-center">
                   <img src={imageUrl} alt="Podgląd" className="w-full h-full object-cover" onError={(e)=>{(e.target as HTMLElement).style.display='none'}} />
@@ -244,7 +367,7 @@ export function AddInsect() {
             </div>
           </div>
 
-          {/* SEKCJA 4: GENERATOR PYTAŃ (templateQuestions) */}
+      
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-3xl font-black text-white tracking-tight">Pytania testowe do bazy</h2>
@@ -281,6 +404,7 @@ export function AddInsect() {
             ))}
           </div>
 
+         
           <div className="flex justify-end pt-4">
             <Button type="submit" className="h-16 px-10 bg-lime-600 hover:bg-lime-500 text-white font-black text-md rounded-2xl shadow-lg transition-transform active:scale-95">
               Zapisz owada i opublikuj w bazie

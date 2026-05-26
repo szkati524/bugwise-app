@@ -137,7 +137,7 @@ export function Dashboard() {
     </div>
   );
 
-  // Bezpieczne wyliczenie łącznej liczby pytań z mapowania templateQuestions
+ 
   const totalMegaQuestionsCount = quizData.flatMap(insect => insect.templateQuestions || insect.questions || insect.questionDTOS || insect.questionsDto || []).length;
 
   return (

@@ -5,4 +5,5 @@ public enum DangerLevel {
     ANNOYING,
     PAINFUL,
     DANGEROUS
+
 }

@@ -20,7 +20,7 @@ public class InsectOrderMapper {
     public void updateEntityFromDTO(InsectOrderDTO dto,InsectOrder entity){
         if (dto == null || entity == null) return;
         entity.setName(dto.name());
-        entity.setLatinName(dto.latinName());
+        entity.setLatinName(dto.orderLatinName());
         entity.setDescription(dto.description());
     }
     public InsectOrder toEntity(InsectOrderDTO dto){
