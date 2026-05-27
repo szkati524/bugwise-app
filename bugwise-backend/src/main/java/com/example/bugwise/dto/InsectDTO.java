@@ -15,18 +15,20 @@ public record InsectDTO(
        String englishName,
         @Size(max = 2000,message = "Description cannot exceed 2000 characters")
         String description,
+        Long orderId,
         @NotBlank(message = "Order name is required")
         String orderName,
         String orderLatinName,
+        Long familyId,
         @NotBlank(message = "Family name is required")
         String familyName,
         String familyLatinName,
+        Long habitatId,
         @NotBlank(message = "Habitat name is required")
         String habitatName,
 
         List<String> imageUrls,
-        @NotEmpty(message = "At least one tag is required")
-        List<String> tags,
+
         boolean isProtected,
         @NotBlank(message = "Danger level display name is required")
         String dangerLevel,

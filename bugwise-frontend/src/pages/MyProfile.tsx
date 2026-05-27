@@ -22,7 +22,7 @@ export function MyProfile() {
       }
 
       try {
-        // Używamy poprawnego, czystego axios
+       
         const response = await axios.get(`http://localhost:8083/api/auth/my-profile?email=${email}`);
         setUser(response.data);
       } catch (error) {
@@ -50,7 +50,7 @@ export function MyProfile() {
   return (
     <div className="flex min-h-screen hero-pattern text-zinc-100 font-sans">
       
-      {/* SIDEBAR */}
+      
       <aside className="w-64 bg-lime-600/95 backdrop-blur-md flex flex-col shadow-2xl border-r border-white/10 sticky top-0 h-screen">
         <div className="p-6 flex items-center gap-3 border-b border-white/10">
           <div className="bg-white/20 p-2 rounded-lg">
@@ -65,7 +65,7 @@ export function MyProfile() {
           <SidebarItem icon={<Bug size={20} />} label="Wszystkie owady" onClick={() => navigate("/all-insects")} />
           <SidebarItem icon={<List size={20} />} label="Kategorie" onClick={() => navigate("/categories")} />
           <SidebarItem icon={<Trophy size={20} />} label="Ranking" onClick={() => navigate("/ranking")} />
-          {/* Dodany element do sidebaru */}
+      
           <SidebarItem icon={<Plus size={20} />} label="Dodaj owada" onClick={() => navigate("/add-insect")} />
         </nav>
 
@@ -76,7 +76,7 @@ export function MyProfile() {
         </div>
       </aside>
 
-      {/* GŁÓWNA ZAWARTOŚĆ */}
+  
       <main className="flex-grow p-12 overflow-y-auto">
         <header className="mb-12">
           <div className="flex items-center gap-4 mb-2 text-lime-500 font-bold uppercase tracking-[0.3em] text-xs">
@@ -90,7 +90,7 @@ export function MyProfile() {
 
         <div className="max-w-3xl bg-zinc-900/40 backdrop-blur-md border border-zinc-800 p-10 rounded-[3rem] shadow-2xl space-y-8">
           
-          {/* INFORMACJE O UŻYTKOWNIKU */}
+         
           <div className="flex items-center gap-6 pb-6 border-b border-zinc-800/60">
             <div className="bg-lime-500/10 p-6 rounded-2xl border border-lime-500/20 text-lime-500">
               <User size={40} />
@@ -101,7 +101,7 @@ export function MyProfile() {
             </div>
           </div>
 
-          {/* POLA Z DANYMI */}
+        
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ProfileInfoField 
               icon={<Mail className="text-lime-500" size={20} />} 
@@ -115,7 +115,7 @@ export function MyProfile() {
             />
           </div>
 
-          {/* NOWA SEKCJA: PANEL ADMINISTRATORA / DODAWANIE OWADÓW */}
+         
           <div className="pt-6 border-t border-zinc-800/60 space-y-4">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <Bug size={18} className="text-lime-500" /> Baza danych owadów
@@ -134,7 +134,7 @@ export function MyProfile() {
             </div>
           </div>
 
-          {/* BEZPIECZEŃSTWO */}
+   
           <div className="pt-6 border-t border-zinc-800/60 space-y-4">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <KeyRound size={18} className="text-lime-500" /> Bezpieczeństwo

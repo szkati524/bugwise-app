@@ -1,6 +1,7 @@
 package com.example.bugwise.controller;
 
 import com.example.bugwise.dto.InsectDTO;
+import com.example.bugwise.dto.InsectUpdateDTO;
 import com.example.bugwise.entity.Insect;
 import com.example.bugwise.repository.InsectRepository;
 import com.example.bugwise.service.InsectService;
@@ -37,10 +38,13 @@ List<InsectDTO> insects = insectService.getAllInsects();
     }
     @PostMapping
     public ResponseEntity<InsectDTO> create(@Valid @RequestBody InsectDTO dto){
+
         return ResponseEntity.status(HttpStatus.CREATED).body(insectService.addInsect(dto));
     }
     @PutMapping("/{id}")
-    public ResponseEntity<InsectDTO> update(@PathVariable Long id,@Valid @RequestBody InsectDTO dto ){
+    public ResponseEntity<InsectDTO> update(@PathVariable Long id, @Valid @RequestBody InsectUpdateDTO dto ){
+
+        System.out.println("HIT CONTROLLER");
         return ResponseEntity.ok(insectService.updateInsect(id,dto));
     }
     @DeleteMapping("/{id}")

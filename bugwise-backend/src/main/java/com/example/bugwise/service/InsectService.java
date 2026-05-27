@@ -2,8 +2,10 @@ package com.example.bugwise.service;
 
 import com.example.bugwise.dto.InsectDTO;
 import com.example.bugwise.dto.InsectQuizDTO;
+import com.example.bugwise.dto.InsectUpdateDTO;
 import com.example.bugwise.dto.QuestionDTO;
 import com.example.bugwise.entity.*;
+import com.example.bugwise.enums.DangerLevel;
 import com.example.bugwise.mapper.InsectMapper;
 import com.example.bugwise.repository.*;
 import jakarta.persistence.EntityNotFoundException;
@@ -24,17 +26,17 @@ public class InsectService {
     private final HabitatRepository habitatRepository;
     private final InsectOrderRepository insectOrderRepository;
     private final InsectFamilyRepository insectFamilyRepository;
-    private final TagRepository tagRepository;
+
     private final InsectMapper insectMapper;
     private final UserRepository userRepository;
 
     @Autowired
-    public InsectService(InsectRepository insectRepository, HabitatRepository habitatRepository, InsectOrderRepository insectOrderRepository, InsectFamilyRepository insectFamilyRepository, TagRepository tagRepository, InsectMapper insectMapper, UserRepository userRepository) {
+    public InsectService(InsectRepository insectRepository, HabitatRepository habitatRepository, InsectOrderRepository insectOrderRepository, InsectFamilyRepository insectFamilyRepository,  InsectMapper insectMapper, UserRepository userRepository) {
         this.insectRepository = insectRepository;
         this.habitatRepository = habitatRepository;
         this.insectOrderRepository = insectOrderRepository;
         this.insectFamilyRepository = insectFamilyRepository;
-        this.tagRepository = tagRepository;
+
         this.insectMapper = insectMapper;
         this.userRepository = userRepository;
     }
@@ -80,14 +82,7 @@ public class InsectService {
             }).toList();
             insect.setTemplateQuestions(questions);
         }
-        if (dto.tags() != null) {
-            List<Tag> insectTags = dto.tags().stream()
-                    .map(tagName -> tagRepository.findByName(tagName)
-                            .orElseGet(() -> tagRepository.save(new Tag(tagName))))
-                    .collect(Collectors.toList());
-            insect.setTag(insectTags);
-            System.out.println("tagi " + dto.tags());
-        }
+
 
         return insectMapper.toDTO(insectRepository.save(insect));
     }
@@ -96,7 +91,7 @@ public class InsectService {
         List<Insect> insects = insectRepository.findAllWithBasicInfo();
         if (!insects.isEmpty()) {
             insects = insectRepository.fetchQuestions(insects);
-            insects = insectRepository.fetchTags(insects);
+
         }
         return insects.stream()
                 .map(insectMapper::toDTO)
@@ -109,44 +104,43 @@ public class InsectService {
     }
 
     @Transactional
-    public InsectDTO updateInsect(Long id, InsectDTO dto) {
-        return insectRepository.findById(id)
-                .map(existing -> {
+    public InsectDTO updateInsect(Long id, InsectUpdateDTO dto) {
 
-                    insectMapper.updateEntityFromDTO(dto, existing);
+        Insect insect = insectRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found"));
 
+        insect.setCommonName(dto.commonName());
+        insect.setLatinName(dto.latinName());
+        insect.setEnglishName(dto.englishName());
+        insect.setDescription(dto.description());
+        insect.setProtected(dto.isProtected());
 
-                    existing.setInsectOrder(getOrCreateOrder(dto.orderName(), dto.orderLatinName()));
-                    existing.setInsectFamily(getOrCreateFamily(dto.familyName(), dto.familyLatinName()));
-                    existing.setHabitat(getOrCreateHabitat(dto.habitatName()));
+        if (dto.dangerLevel() != null) {
+            insect.setDangerLevel(DangerLevel.valueOf(dto.dangerLevel()));
+        }
 
-
-                    if (dto.templateQuestions() != null) {
-                        existing.getTemplateQuestions().clear();
-                        List<Question> newQuestions = dto.templateQuestions().stream().map(qDto -> {
-                            Question q = new Question();
-                            q.setContent(qDto.content());
-                            q.setOptions(qDto.options());
-                            q.setCorrectAnswer(qDto.correctAnswer());
-                            q.setInsect(existing);
-                            return q;
-                        }).toList();
-                        existing.getTemplateQuestions().addAll(newQuestions);
-                    }
+        insect.setInsectOrder(getOrder(dto.orderId(), dto.orderName(), dto.orderLatinName()));
+        insect.setInsectFamily(getFamily(dto.familyId(), dto.familyName(), dto.familyLatinName()));
+        insect.setHabitat(getHabitat(dto.habitatId(), dto.habitatName()));
 
 
-                    if (dto.tags() != null) {
-                        List<Tag> newTags = dto.tags().stream()
-                                .map(tagName -> tagRepository.findByName(tagName)
-                                        .orElseGet(() -> tagRepository.save(new Tag(tagName))))
-                                .collect(Collectors.toList());
-                        existing.setTag(newTags);
-                    }
 
-                    return insectMapper.toDTO(insectRepository.save(existing));
-                })
-                .orElseThrow(() -> new EntityNotFoundException("Nie znaleziono owada: " + id));
+        if (dto.templateQuestions() != null) {
+            dto.templateQuestions().forEach(q -> {
+                Question entity = new Question();
+                entity.setContent(q.content());
+                entity.setOptions(new ArrayList<>(q.options()));
+                entity.setCorrectAnswer(q.correctAnswer());
+                entity.setInsect(insect);
+                insect.getTemplateQuestions().add(entity);
+            });
+        }
+
+
+
+        return insectMapper.toDTO(insectRepository.save(insect));
     }
+
     @Transactional
     public void deleteInsect(Long id) {
         if (!insectRepository.existsById(id)) {
@@ -210,23 +204,66 @@ public class InsectService {
         return isRemoved;
     }
 
-    private InsectOrder getOrCreateOrder(String name, String latinName) {
-        return insectOrderRepository.findByName(name)
-                .or(() -> insectOrderRepository.findByLatinName(latinName))
-                .orElseGet(() -> insectOrderRepository.save(new InsectOrder(name, latinName)));
+    private InsectOrder getOrder(Long id, String name, String latinName) {
+
+        if (id != null) {
+            return insectOrderRepository.getReferenceById(id);
+        }
+
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Order name required");
+        }
+
+        String safeLatin = (latinName == null || latinName.isBlank())
+                ? name
+                : latinName;
+
+        InsectOrder order = new InsectOrder();
+        order.setName(name);
+        order.setLatinName(safeLatin);
+
+        return insectOrderRepository.save(order);
     }
 
-    private InsectFamily getOrCreateFamily(String name, String latinName) {
-        return insectFamilyRepository.findByName(name)
-                .or(() -> insectFamilyRepository.findByLatinName(latinName))
-                .orElseGet(() -> insectFamilyRepository.save(new InsectFamily(name, latinName)));
+    private InsectFamily getFamily(Long id, String name, String latinName) {
+
+        if (id != null) {
+            return insectFamilyRepository.getReferenceById(id);
+        }
+
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Family name required");
+        }
+
+        String safeLatin = (latinName == null || latinName.isBlank())
+                ? name
+                : latinName;
+
+        InsectFamily family = new InsectFamily();
+        family.setName(name);
+        family.setLatinName(safeLatin);
+
+        return insectFamilyRepository.save(family);
     }
 
-    private Habitat getOrCreateHabitat(String name) {
-        return habitatRepository.findByName(name)
-                .orElseGet(() -> habitatRepository.save(new Habitat(name)));
+    private Habitat getHabitat(Long id, String name) {
+
+        if (id != null) {
+            return habitatRepository.getReferenceById(id);
+        }
+
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Habitat name required");
+        }
+
+        Habitat h = new Habitat();
+        h.setName(name);
+
+        return habitatRepository.save(h);
     }
+
+
+
 }
-
 
 

@@ -1,8 +1,6 @@
 package com.example.bugwise.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
 public class InsectImage {
@@ -14,6 +12,9 @@ public class InsectImage {
     private String url;
     private String sourceUrl;
     private String author;
+    @ManyToOne
+    @JoinColumn(name = "insect_id")
+    private Insect insect;
 
     public InsectImage(Long id, String url, String sourceUrl, String author) {
         this.id = id;

@@ -21,8 +21,7 @@ public interface InsectRepository extends JpaRepository<Insect,Long> {
 
 @Query("SELECT DISTINCT i FROM Insect i LEFT JOIN FETCH i.templateQuestions WHERE i IN :insects")
 List<Insect> fetchQuestions(@Param("insects") List<Insect> insects);
-@Query("SELECT i FROM Insect i LEFT JOIN FETCH i.tag WHERE i IN :insects")
-List<Insect> fetchTags(@Param("insects")List<Insect> insects);
+
 
 @Query("SELECT DISTINCT i FROM Insect i " + "LEFT JOIN FETCH i.templateQuestions " +  "WHERE i.id IN :ids")
     List<Insect> findAllByIdsWithQuestions(@Param("ids") List<Long> ids);

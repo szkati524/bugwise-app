@@ -3,6 +3,7 @@ package com.example.bugwise.entity;
 import com.example.bugwise.enums.DangerLevel;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.springframework.core.metrics.StartupStep;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,28 +32,26 @@ public class Insect {
    @ManyToOne(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
    @JoinColumn(name = "habitat_id")
     private Habitat habitat;
-@OneToMany(cascade = CascadeType.ALL)
-@JoinColumn(name = "insect_id")
-    private List<InsectImage> insectImage;
-   @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-   @JoinTable(name = "insect_tags",
-   joinColumns= @JoinColumn(name = "insect_id"),
-   inverseJoinColumns = @JoinColumn(name = "tag_id")
-   )
-    private List<Tag> tag = new ArrayList<>();
+
+
     private boolean isProtected;
     @Enumerated(EnumType.STRING)
     private DangerLevel dangerLevel;
-
-    @OneToMany(mappedBy = "insect",cascade = CascadeType.ALL,fetch = FetchType.EAGER,orphanRemoval = true)
+    @OneToMany(mappedBy = "insect", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Question> templateQuestions = new ArrayList<>();
+
+
+
+
+    @OneToMany(mappedBy = "insect", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<InsectImage> insectImage = new ArrayList<>();
 
     @ManyToMany(mappedBy = "savedInsects")
     private List<User> usersWhoSaved = new ArrayList<>();
 
 
 
-    public Insect(Long id, String commonName, String latinName, String englishName, InsectOrder insectOrder, InsectFamily insectFamily, String description, Habitat habitat, List<InsectImage> insectImage, List<Tag> tag, boolean isProtected, DangerLevel dangerLevel,List<Question> templateQuestions,List<User> usersWhoSaved) {
+    public Insect(Long id, String commonName, String latinName, String englishName, InsectOrder insectOrder, InsectFamily insectFamily, String description, Habitat habitat, List<InsectImage> insectImage,  boolean isProtected, DangerLevel dangerLevel,List<Question> templateQuestions,List<User> usersWhoSaved) {
         this.id = id;
         this.commonName = commonName;
         this.latinName = latinName;
@@ -62,7 +61,7 @@ public class Insect {
         this.description = description;
         this.habitat = habitat;
         this.insectImage = insectImage;
-        this.tag = tag;
+
         this.isProtected = isProtected;
         this.dangerLevel = dangerLevel;
         this.templateQuestions = templateQuestions;
@@ -142,13 +141,8 @@ public class Insect {
         this.insectImage = insectImage;
     }
 
-    public List<Tag> getTag() {
-        return tag;
-    }
 
-    public void setTag(List<Tag> tag) {
-        this.tag = tag;
-    }
+
 
     public boolean isProtected() {
         return isProtected;
@@ -171,7 +165,9 @@ public class Insect {
     }
 
     public void setTemplateQuestions(List<Question> templateQuestions) {
-        this.templateQuestions = templateQuestions;
+        this.templateQuestions = new ArrayList<>(
+                templateQuestions == null ? new ArrayList<>() : templateQuestions
+        );
     }
 
 

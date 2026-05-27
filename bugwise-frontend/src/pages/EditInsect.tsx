@@ -1,88 +1,243 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Loader2, Save, Trash2, Plus, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useParams, useNavigate } from "react-router-dom";
+
+type Order = { id: number; name: string };
+type Family = { id: number; name: string };
+type Habitat = { id: number; name: string };
 
 export function EditInsect() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [insect, setInsect] = useState<any>(null);
+
   const [loading, setLoading] = useState(true);
 
+  const [insect, setInsect] = useState<any>({
+    commonName: "",
+    latinName: "",
+    englishName: "",
+    description: "",
+    orderId: null,
+    orderName: "",
+    orderLatinName: "",
+    familyId: null,
+    familyName: "",
+    familyLatinName: "",
+    habitatId: null,
+    habitatName: "",
+    imageUrls: [],
+    tags: [],
+    isProtected: false,
+    dangerLevel: "",
+    dangerLevelCode: "",
+    templateQuestions: []
+  });
+
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [families, setFamilies] = useState<Family[]>([]);
+  const [habitats, setHabitats] = useState<Habitat[]>([]);
+
+  const [newOrder, setNewOrder] = useState({ name: "", latinName: "" });
+  const [newFamily, setNewFamily] = useState({ name: "", latinName: "" });
+
+  const [creatingOrder, setCreatingOrder] = useState(false);
+  const [creatingFamily, setCreatingFamily] = useState(false);
+
   useEffect(() => {
-    axios.get(`http://localhost:8083/api/insects/${id}`)
-      .then(res => { setInsect(res.data); setLoading(false); })
-      .catch(() => navigate("/all-insects"));
-  }, [id, navigate]);
+    Promise.all([
+      axios.get(`http://localhost:8083/api/insects/${id}`),
+      axios.get(`http://localhost:8083/api/orders`),
+      axios.get(`http://localhost:8083/api/families`),
+      axios.get(`http://localhost:8083/api/habitats`)
+    ]).then(([i, o, f, h]) => {
+      setInsect(i.data);
+
+      setOrders(Array.isArray(o.data) ? o.data : []);
+      setFamilies(Array.isArray(f.data) ? f.data : []);
+      setHabitats(Array.isArray(h.data) ? h.data : []);
+
+      setLoading(false);
+    });
+  }, [id]);
 
   const handleUpdate = async () => {
-    try {
-      await axios.put(`http://localhost:8083/api/insects/${id}`, insect);
-      navigate(`/insects/${id}`);
-    } catch (e) { alert("Błąd zapisu!"); }
+    const payload = {
+      id: insect.id,
+      commonName: insect.commonName,
+      latinName: insect.latinName,
+      englishName: insect.englishName,
+      description: insect.description,
+
+      orderId: insect.orderId ?? null,
+      orderName: creatingOrder ? newOrder.name : insect.orderName,
+      orderLatinName: creatingOrder ? newOrder.latinName : insect.orderLatinName,
+
+      familyId: insect.familyId ?? null,
+      familyName: creatingFamily ? newFamily.name : insect.familyName,
+      familyLatinName: creatingFamily ? newFamily.latinName : insect.familyLatinName,
+
+      habitatId: insect.habitatId ?? null,
+      habitatName: insect.habitatName,
+
+      imageUrls: insect.imageUrls ?? [],
+      tags: insect.tags ?? [],
+      isProtected: insect.isProtected ?? false,
+      dangerLevel: insect.dangerLevel ?? "",
+      dangerLevelCode: insect.dangerLevelCode ?? "",
+      templateQuestions: insect.templateQuestions ?? []
+    };
+
+    console.log("PAYLOAD:", payload);
+
+    await axios.put(
+      `http://localhost:8083/api/insects/${id}`,
+      payload
+    );
+
+    navigate(`/insects/${id}`);
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-lime-500"><Loader2 className="animate-spin" size={48} /></div>;
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <div className="min-h-screen hero-pattern p-6 md:p-12 text-zinc-100 flex justify-center">
-      <div className="w-full max-w-4xl space-y-6">
-        <h1 className="text-4xl font-black">Edycja: {insect.commonName}</h1>
-        
-        <div className="space-y-6 bg-zinc-900/50 p-8 rounded-3xl border border-zinc-800 shadow-2xl">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Nazwa zwyczajowa" value={insect.commonName} onChange={e => setInsect({...insect, commonName: e.target.value})} />
-            <Input label="Nazwa łacińska" value={insect.latinName} onChange={e => setInsect({...insect, latinName: e.target.value})} />
-            <Input label="Rząd" value={insect.orderName} onChange={e => setInsect({...insect, orderName: e.target.value})} />
-            <Input label="Rodzina" value={insect.familyName} onChange={e => setInsect({...insect, familyName: e.target.value})} />
-          </div>
-
-          <textarea 
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 h-32"
-            value={insect.description} 
-            onChange={e => setInsect({...insect, description: e.target.value})} 
-            placeholder="Opis owada (do 2000 znaków)"
-          />
+    <div className="p-4 space-y-4">
 
       
-          <div className="mt-8 space-y-4">
-            <h2 className="text-xl font-bold border-b border-zinc-800 pb-2">Pytania quizowe</h2>
-            {insect.templateQuestions?.map((q: any, qIdx: number) => (
-              <div key={qIdx} className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-2">
-                <Input placeholder="Treść pytania" value={q.content} onChange={e => {
-                  const qs = [...insect.templateQuestions];
-                  qs[qIdx].content = e.target.value;
-                  setInsect({...insect, templateQuestions: qs});
-                }} />
-                
-               
-                <div className="grid grid-cols-2 gap-2">
-                  {[0,1,2,3].map((optIdx) => (
-                    <Input key={optIdx} placeholder={`Opcja ${optIdx+1}`} value={q.options?.[optIdx] || ""} onChange={e => {
-                      const qs = [...insect.templateQuestions];
-                      if (!qs[qIdx].options) qs[qIdx].options = [];
-                      qs[qIdx].options[optIdx] = e.target.value;
-                      setInsect({...insect, templateQuestions: qs});
-                    }} />
-                  ))}
-                </div>
-                <Button onClick={() => setInsect({...insect, templateQuestions: insect.templateQuestions.filter((_:any, i:number) => i !== qIdx)})} 
-                        className="bg-red-900/20 text-red-500 w-full"><Trash2 size={16} className="mr-2"/> Usuń pytanie</Button>
-              </div>
-            ))}
-            <Button onClick={() => setInsect({...insect, templateQuestions: [...(insect.templateQuestions || []), {content: '', options: ['','','','']}]})} 
-                    className="w-full bg-lime-600"><Plus size={16} className="mr-2" /> Dodaj pytanie</Button>
-          </div>
+      <input
+        value={insect.commonName || ""}
+        onChange={(e) =>
+          setInsect({ ...insect, commonName: e.target.value })
+        }
+        placeholder="Common name"
+      />
 
-          <div className="flex gap-4 pt-8 border-t border-zinc-800">
-            <Button onClick={handleUpdate} className="bg-lime-600 flex-1 font-bold"><Save className="mr-2" /> Zapisz zmiany</Button>
-            <Button onClick={() => navigate(-1)} variant="ghost">Anuluj</Button>
-          </div>
-        </div>
-      </div>
+      <input
+        value={insect.latinName || ""}
+        onChange={(e) =>
+          setInsect({ ...insect, latinName: e.target.value })
+        }
+        placeholder="Latin name"
+      />
+
+      <input
+        value={insect.englishName || ""}
+        onChange={(e) =>
+          setInsect({ ...insect, englishName: e.target.value })
+        }
+        placeholder="English name"
+      />
+
+   
+      <select
+        value={insect.orderId ?? ""}
+        onChange={(e) => {
+          if (e.target.value === "NEW") {
+            setCreatingOrder(true);
+            setInsect({
+              ...insect,
+              orderId: null,
+              orderName: "",
+              orderLatinName: ""
+            });
+          } else {
+            setCreatingOrder(false);
+            const selected = orders.find(o => o.id === Number(e.target.value));
+
+            setInsect({
+              ...insect,
+              orderId: Number(e.target.value),
+              orderName: selected?.name ?? "",
+              orderLatinName: ""
+            });
+          }
+        }}
+      >
+        <option value="">Select order</option>
+        {orders.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.name}
+          </option>
+        ))}
+        <option value="NEW">+ NEW</option>
+      </select>
+
+      {creatingOrder && (
+        <>
+          <input
+            placeholder="Order name"
+            value={newOrder.name}
+            onChange={(e) =>
+              setNewOrder({ ...newOrder, name: e.target.value })
+            }
+          />
+          <input
+            placeholder="Latin name"
+            value={newOrder.latinName}
+            onChange={(e) =>
+              setNewOrder({ ...newOrder, latinName: e.target.value })
+            }
+          />
+        </>
+      )}
+
+      <select
+        value={insect.familyId ?? ""}
+        onChange={(e) => {
+          if (e.target.value === "NEW") {
+            setCreatingFamily(true);
+            setInsect({
+              ...insect,
+              familyId: null,
+              familyName: "",
+              familyLatinName: ""
+            });
+          } else {
+            setCreatingFamily(false);
+
+            const selected = families.find(f => f.id === Number(e.target.value));
+
+            setInsect({
+              ...insect,
+              familyId: Number(e.target.value),
+              familyName: selected?.name ?? "",
+              familyLatinName: ""
+            });
+          }
+        }}
+      >
+        <option value="">Select family</option>
+        {families.map((f) => (
+          <option key={f.id} value={f.id}>
+            {f.name}
+          </option>
+        ))}
+        <option value="NEW">+ NEW</option>
+      </select>
+
+      {creatingFamily && (
+        <>
+          <input
+            placeholder="Family name"
+            value={newFamily.name}
+            onChange={(e) =>
+              setNewFamily({ ...newFamily, name: e.target.value })
+            }
+          />
+          <input
+            placeholder="Latin name"
+            value={newFamily.latinName}
+            onChange={(e) =>
+              setNewFamily({ ...newFamily, latinName: e.target.value })
+            }
+          />
+        </>
+      )}
+
+      <button onClick={handleUpdate}>
+        SAVE
+      </button>
     </div>
   );
 }

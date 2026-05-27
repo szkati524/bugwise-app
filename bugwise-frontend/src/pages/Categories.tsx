@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Pomocnicza funkcja przypisująca ikony na podstawie nazwy habitatu
+
 const getCategoryIcon = (name: string) => {
   const normalized = name.toLowerCase();
   if (normalized.includes("las") || normalized.includes("leśn")) return <Trees size={32} />;
@@ -32,19 +32,19 @@ export function Categories() {
     if (!email) { navigate("/login"); return; }
     
     try {
-      // 1. Pobieramy profil użytkownika
+     
       const userResponse = await axios.get(`http://localhost:8083/api/auth/my-profile?email=${email}`);
       setUser(userResponse.data);
 
-      // 2. Pobieramy zapisane ID owadów dla quizu
+     
       const savedIdsResponse = await axios.get(`http://localhost:8083/api/quiz/saved-ids?email=${email}`);
       setSavedInsectIds(savedIdsResponse.data);
 
-      // 3. Pobieramy wszystkie owady
+    
       const insectsResponse = await axios.get("http://localhost:8083/api/insects");
       const allInsects = insectsResponse.data;
 
-      // 4. Dynamiczne grupowanie po strukturze obiektów (insect.habitat?.name)
+    
       const habitatMap: { [key: string]: any[] } = {};
       allInsects.forEach((insect: any) => {
         const habitatName = insect.habitat?.name || "Inne Środowiska";
@@ -107,7 +107,7 @@ export function Categories() {
   return (
     <div className="flex min-h-screen hero-pattern text-zinc-100 font-sans">
       
-      {/* PANEL BOCZNY (Sidebar) */}
+   
       <aside className="w-64 bg-lime-600/95 backdrop-blur-md flex flex-col shadow-2xl border-r border-white/10 sticky top-0 h-screen z-20">
         <div className="p-6 flex items-center gap-3 border-b border-white/10">
           <div className="bg-white/20 p-2 rounded-lg"><Bug className="text-white fill-white" size={24} /></div>
@@ -127,10 +127,10 @@ export function Categories() {
         </div>
       </aside>
 
-      {/* GŁÓWNY PANEL */}
+   
       <main className="flex-grow p-12 overflow-y-auto">
         
-        {/* WIDOK 1: LISTA KATEGORII HABITATÓW */}
+      
         {!selectedCategory ? (
           <>
             <header className="mb-12">
@@ -171,7 +171,7 @@ export function Categories() {
           </>
         ) : (
           
-          /* WIDOK 2: LISTA OWADÓW W KATEGORII (WYGLĄD JAK W ALLINSECTS) */
+         
           <>
             <header className="mb-12 space-y-4">
               <button 
@@ -193,7 +193,7 @@ export function Categories() {
               </div>
             </header>
 
-            {/* SIATKA Z KARTAMI OWADÓW IDENTYCZNA JAK W ALLINSECTS */}
+        
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl">
               {filteredInsects.map((insect: any) => {
                 const currentId = insect.id || insect.ID;
@@ -212,7 +212,7 @@ export function Categories() {
                     className="bg-zinc-900/40 backdrop-blur-md border border-zinc-800 p-8 rounded-[2rem] shadow-2xl flex flex-col justify-between group hover:border-lime-500/30 transition-all relative overflow-hidden"
                   >
                     <div>
-                      {/* Górna sekcja (Badge i przycisk plusa) */}
+                     
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex gap-2">
                           <span className="text-xs font-black uppercase text-lime-500 bg-lime-500/10 px-3 py-1 rounded-full border border-lime-500/20">
@@ -236,7 +236,7 @@ export function Categories() {
                         </button>
                       </div>
 
-                      {/* Tytuły i Opis */}
+                      
                       <h3 className="text-2xl font-black text-white group-hover:text-lime-500 transition-colors">
                         {displayName}
                       </h3>
@@ -248,7 +248,7 @@ export function Categories() {
                       </p>
                     </div>
 
-                    {/* Przycisk przejścia do detali sparowany z InsectDetails */}
+                   
                     <Button 
                       variant="link" 
                       onClick={() => navigate(`/insects/${currentId}`)}
